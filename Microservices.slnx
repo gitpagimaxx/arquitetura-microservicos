@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Frontend/">
+    <Project Path="GeekShopping.Web/GeekShopping.Web.csproj" />
+  </Folder>
+  <Folder Name="/Services/">
+    <Project Path="GeekShopping.API/GeekShopping.API.csproj" />
+  </Folder>
+</Solution>
