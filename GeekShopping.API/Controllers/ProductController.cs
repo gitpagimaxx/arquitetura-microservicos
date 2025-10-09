@@ -77,7 +77,7 @@ namespace GeekShopping.API.Controllers
 
             _logger.LogInformation("Product with ID: {id} deleted successfully", id);
 
-            return NoContent();
+            return Ok(true);
         }
     }
 }
