@@ -4,5 +4,6 @@
   </Folder>
   <Folder Name="/Services/">
     <Project Path="GeekShopping.API/GeekShopping.API.csproj" />
+    <Project Path="GeekShopping.IdentityServer/GeekShopping.IdentityServer.csproj" Id="b98c1b87-b340-4d26-b07c-e467b42af13d" />
   </Folder>
 </Solution>

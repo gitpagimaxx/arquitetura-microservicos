@@ -1,5 +1,7 @@
 ﻿using GeekShopping.API.Data.ValueObjects;
 using GeekShopping.API.Repository.Interfaces;
+using GeekShopping.API.Utils;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GeekShopping.API.Controllers
@@ -11,6 +13,7 @@ namespace GeekShopping.API.Controllers
         private readonly IProductRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         private readonly ILogger<ProductController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
+        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductVO>>> Get()
         {
@@ -20,6 +23,7 @@ namespace GeekShopping.API.Controllers
             return Ok(products);
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<ActionResult<ProductVO>> Get(long id)
         {
@@ -30,6 +34,7 @@ namespace GeekShopping.API.Controllers
             return Ok(product);
         }
 
+        [Authorize]
         [HttpPost]
         public async Task<ActionResult<ProductVO>> Post([FromBody] ProductVO product)
         {
@@ -47,6 +52,7 @@ namespace GeekShopping.API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = Role.Admin)]
         public async Task<ActionResult<ProductVO>> Put([FromBody] ProductVO product)
         {
             if (product == null)
@@ -63,6 +69,7 @@ namespace GeekShopping.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = Role.Admin)]
         public async Task<ActionResult> Delete(long id)
         {
             _logger.LogInformation("Attempting to delete product with ID: {id}", id);
