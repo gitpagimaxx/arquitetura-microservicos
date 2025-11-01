@@ -1,7 +1,7 @@
 ﻿using GeekShopping.Web.Models;
-using GeekShopping.Web.Services;
 using GeekShopping.Web.Services.Interfaces;
 using GeekShopping.Web.Utils;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,11 +15,10 @@ public class ProductController(
     private readonly ILogger<ProductController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     private readonly IProductServices _productService = productServices;
 
-    [Authorize]
     [HttpGet("")]
     public async Task<IActionResult> ProductIndex()
     {
-        var products = await _productService.FindAll();
+        var products = await _productService.FindAll("");
         return View(products);
     }
 
@@ -35,7 +34,8 @@ public class ProductController(
     {
         if (ModelState.IsValid)
         {
-            var response = await _productService.Create(model);
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            var response = await _productService.Create(model, accessToken!);
             if (response != null) return RedirectToAction(nameof(ProductIndex));
         }
         return View(model);
@@ -44,7 +44,8 @@ public class ProductController(
     [HttpGet("update/{id}")]
     public async Task<IActionResult> ProductUpdate(int id)
     {
-        var model = await _productService.FindById(id);
+        var accessToken = await HttpContext.GetTokenAsync("access_token");
+        var model = await _productService.FindById(id, accessToken!);
         if (model != null) return View(model);
         return NotFound();
     }
@@ -55,7 +56,8 @@ public class ProductController(
     {
         if (ModelState.IsValid)
         {
-            var response = await _productService.Update(model);
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            var response = await _productService.Update(model, accessToken!);
             if (response != null) return RedirectToAction(nameof(ProductIndex));
         }
         return View(model);
@@ -65,7 +67,8 @@ public class ProductController(
     [HttpGet("delete/{id}")]
     public async Task<IActionResult> ProductDelete(int id)
     {
-        var model = await _productService.FindById(id);
+        var accessToken = await HttpContext.GetTokenAsync("access_token");
+        var model = await _productService.FindById(id, accessToken!);
         if (model != null) return View(model);
         return NotFound();
     }
@@ -74,7 +77,8 @@ public class ProductController(
     [Authorize(Roles = Role.Admin)]
     public async Task<IActionResult> ProductDelete(ProductModel model)
     {
-        var response = await _productService.Delete(model.Id);
+        var accessToken = await HttpContext.GetTokenAsync("access_token");
+        var response = await _productService.Delete(model.Id, accessToken!);
         if (response) return RedirectToAction(nameof(ProductIndex));
         return View(model);
     }

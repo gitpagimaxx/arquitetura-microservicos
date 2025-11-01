@@ -6,9 +6,13 @@ using Duende.IdentityServer.Models;
 using Duende.IdentityServer.Services;
 using Duende.IdentityServer.Stores;
 using Duende.IdentityServer.Test;
+using GeekShopping.IdentityServer.Model;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Data;
+using System.Security.Claims;
 
 namespace GeekShopping.IdentityServer.MainModule.Account;
 
@@ -25,14 +29,18 @@ public class AccountController(
     IAuthenticationSchemeProvider schemeProvider,
     IIdentityProviderStore identityProviderStore,
     IEventService events,
-    TestUserStore users = null!) : Controller
+    UserManager<ApplicationUser> userManager,
+    RoleManager<IdentityRole> roleManager,
+    SignInManager<ApplicationUser> signInManager) : Controller
 {
-    private readonly TestUserStore _users = users ?? throw new Exception("Please call 'AddTestUsers(TestUsers.Users)' on the IIdentityServerBuilder in Startup or remove the TestUserStore from the AccountController.");
     private readonly IIdentityServerInteractionService _interaction = interaction;
     private readonly IClientStore _clientStore = clientStore;
     private readonly IAuthenticationSchemeProvider _schemeProvider = schemeProvider;
     private readonly IIdentityProviderStore _identityProviderStore = identityProviderStore;
     private readonly IEventService _events = events;
+    private readonly UserManager<ApplicationUser> _userManager = userManager;
+    private readonly RoleManager<IdentityRole> _roleManager = roleManager;
+    private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
 
     /// <summary>
     /// Entry point into the login workflow
@@ -77,10 +85,10 @@ public class AccountController(
                 {
                     // The client is native, so this change in how to
                     // return the response is for better UX for the end user.
-                    return this.LoadingPage("Redirect", model.ReturnUrl);
+                    return this.LoadingPage("Redirect", model.ReturnUrl!);
                 }
 
-                return Redirect(model.ReturnUrl);
+                return Redirect(model.ReturnUrl!);
             }
             else
             {
@@ -91,11 +99,13 @@ public class AccountController(
 
         if (ModelState.IsValid)
         {
+            var result = await _signInManager.PasswordSignInAsync(model.Username!, model.Password!, model.RememberLogin, lockoutOnFailure: false);
+
             // validate username/password against in-memory store
-            if (_users.ValidateCredentials(model.Username, model.Password))
+            if (result.Succeeded)
             {
-                var user = _users.FindByUsername(model.Username);
-                await _events.RaiseAsync(new UserLoginSuccessEvent(user.Username, user.SubjectId, user.Username, clientId: context?.Client.ClientId));
+                var user = await _userManager.FindByNameAsync(model.Username!);
+                await _events.RaiseAsync(new UserLoginSuccessEvent(user!.UserName, user.Id, user.UserName, clientId: context?.Client.ClientId));
 
                 // only set explicit expiration here if user chooses "remember me". 
                 // otherwise we rely upon expiration configured in cookie middleware.
@@ -111,9 +121,9 @@ public class AccountController(
                 ;
 
                 // issue authentication cookie with subject ID and username
-                var isuser = new IdentityServerUser(user.SubjectId)
+                var isuser = new IdentityServerUser(user.Id)
                 {
-                    DisplayName = user.Username
+                    DisplayName = user.UserName
                 };
 
                 await HttpContext.SignInAsync(isuser, props);
@@ -124,11 +134,11 @@ public class AccountController(
                     {
                         // The client is native, so this change in how to
                         // return the response is for better UX for the end user.
-                        return this.LoadingPage("Redirect", model.ReturnUrl);
+                        return this.LoadingPage("Redirect", model.ReturnUrl!);
                     }
 
                     // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
-                    return Redirect(model.ReturnUrl);
+                    return Redirect(model.ReturnUrl!);
                 }
 
                 // request for a local page
@@ -189,7 +199,7 @@ public class AccountController(
         if (User?.Identity!.IsAuthenticated == true)
         {
             // delete local authentication cookie
-            await HttpContext.SignOutAsync();
+            await _signInManager.SignOutAsync();
 
             // raise the logout event
             await _events.RaiseAsync(new UserLogoutSuccessEvent(User.GetSubjectId(), User.GetDisplayName()));
@@ -204,7 +214,7 @@ public class AccountController(
             string url = Url.Action("Logout", new { logoutId = vm.LogoutId })!;
 
             // this triggers a redirect to the external provider for sign-out
-            return SignOut(new AuthenticationProperties { RedirectUri = url }, vm.ExternalAuthenticationScheme);
+            return SignOut(new AuthenticationProperties { RedirectUri = url }, vm.ExternalAuthenticationScheme!);
         }
 
         return View("LoggedOut", vm);
@@ -216,10 +226,162 @@ public class AccountController(
         return View();
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Register(string returnUrl)
+    {
+        // build a model so we know what to show on the reg page
+        var vm = await BuildRegisterViewModelAsync(returnUrl);
+
+        return View(vm);
+    }    
+
+    [HttpPost]
+    [AllowAnonymous]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Register(RegisterViewModel model, string returnUrl = null)
+    {
+        ViewData["ReturnUrl"] = returnUrl;
+        if (ModelState.IsValid)
+        {
+
+            var user = new ApplicationUser
+            {
+                UserName = model.Username,
+                Email = model.Email,
+                EmailConfirmed = true,
+                FirstName = model.FirstName,
+                LastName = model.LastName
+            };
+
+            var result = await _userManager.CreateAsync(user, model.Password!);
+            if (result.Succeeded)
+            {
+                if (!_roleManager.RoleExistsAsync(model.RoleName!).GetAwaiter().GetResult())
+                {
+                    var userRole = new IdentityRole
+                    {
+                        Name = model.RoleName,
+                        NormalizedName = model.RoleName,
+
+                    };
+                    await _roleManager.CreateAsync(userRole);
+                }
+
+                await _userManager.AddToRoleAsync(user, model.RoleName!);
+
+                await _userManager.AddClaimsAsync(user, [
+                    new(JwtClaimTypes.Name, model.Username!),
+                    new(JwtClaimTypes.Email, model.Email!),
+                    new(JwtClaimTypes.FamilyName, model.FirstName!),
+                    new(JwtClaimTypes.GivenName, model.LastName!),
+                    new(JwtClaimTypes.WebSite, $"http://{model.Username}.com"),
+                    new(JwtClaimTypes.Role,"User") ]);
+
+                var context = await _interaction.GetAuthorizationContextAsync(model.ReturnUrl);
+                var loginresult = await _signInManager.PasswordSignInAsync(model.Username!, model.Password!, false, lockoutOnFailure: true);
+                if (loginresult.Succeeded)
+                {
+                    var checkuser = await _userManager.FindByNameAsync(model.Username!);
+                    await _events.RaiseAsync(new UserLoginSuccessEvent(checkuser!.UserName, checkuser.Id, checkuser.UserName, clientId: context?.Client.ClientId));
+
+                    if (context != null)
+                    {
+                        if (context.IsNativeClient())
+                        {
+                            // The client is native, so this change in how to
+                            // return the response is for better UX for the end user.
+                            return this.LoadingPage("Redirect", model.ReturnUrl!);
+                        }
+
+                        // we can trust model.ReturnUrl since GetAuthorizationContextAsync returned non-null
+                        return Redirect(model.ReturnUrl!);
+                    }
+
+                    // request for a local page
+                    if (Url.IsLocalUrl(model.ReturnUrl))
+                    {
+                        return Redirect(model.ReturnUrl);
+                    }
+                    else if (string.IsNullOrEmpty(model.ReturnUrl))
+                    {
+                        return Redirect("~/");
+                    }
+                    else
+                    {
+                        // user might have clicked on a malicious link - should be logged
+                        throw new Exception("invalid return URL");
+                    }
+                }
+            }
+        }
+
+        // If we got this far, something failed, redisplay form
+        return View(model);
+    }
 
     /*****************************************/
     /* helper APIs for the AccountController */
     /*****************************************/
+    private async Task<RegisterViewModel> BuildRegisterViewModelAsync(string returnUrl)
+    {
+        var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
+        List<string> roles = ["Admin", "Client"];
+        ViewBag.message = roles;
+        if (context?.IdP != null && await _schemeProvider.GetSchemeAsync(context.IdP) != null)
+        {
+            var local = context.IdP == IdentityServerConstants.LocalIdentityProvider;
+
+            // this is meant to short circuit the UI and only trigger the one external IdP
+            var vm = new RegisterViewModel
+            {
+                EnableLocalLogin = local,
+                ReturnUrl = returnUrl,
+                Username = context?.LoginHint,
+            };
+
+            if (!local)
+            {
+                vm.ExternalProviders = new[] { new ExternalProvider { AuthenticationScheme = context.IdP } };
+            }
+
+            return vm;
+        }
+
+        var schemes = await _schemeProvider.GetAllSchemesAsync();
+
+        var providers = schemes
+            .Where(x => x.DisplayName != null)
+            .Select(x => new ExternalProvider
+            {
+                DisplayName = x.DisplayName ?? x.Name,
+                AuthenticationScheme = x.Name
+            }).ToList();
+
+        var allowLocal = true;
+        if (context?.Client.ClientId != null)
+        {
+            var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId);
+            if (client != null)
+            {
+                allowLocal = client.EnableLocalLogin;
+
+                if (client.IdentityProviderRestrictions != null && client.IdentityProviderRestrictions.Any())
+                {
+                    providers = providers.Where(provider => client.IdentityProviderRestrictions.Contains(provider.AuthenticationScheme)).ToList();
+                }
+            }
+        }
+
+        return new RegisterViewModel
+        {
+            AllowRememberLogin = AccountOptions.AllowRememberLogin,
+            EnableLocalLogin = allowLocal && AccountOptions.AllowLocalLogin,
+            ReturnUrl = returnUrl,
+            Username = context?.LoginHint,
+            ExternalProviders = providers.ToArray()
+        };
+    }
+
     private async Task<LoginViewModel> BuildLoginViewModelAsync(string returnUrl)
     {
         var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
@@ -237,7 +399,7 @@ public class AccountController(
 
             if (!local)
             {
-                vm.ExternalProviders = new[] { new ExternalProvider { AuthenticationScheme = context.IdP } };
+                vm.ExternalProviders = new[] { new ExternalProvider { AuthenticationScheme = context!.IdP } };
             }
 
             return vm;
@@ -289,7 +451,7 @@ public class AccountController(
 
     private async Task<LoginViewModel> BuildLoginViewModelAsync(LoginInputModel model)
     {
-        var vm = await BuildLoginViewModelAsync(model.ReturnUrl);
+        var vm = await BuildLoginViewModelAsync(model.ReturnUrl!);
         vm.Username = model.Username;
         vm.RememberLogin = model.RememberLogin;
         return vm;

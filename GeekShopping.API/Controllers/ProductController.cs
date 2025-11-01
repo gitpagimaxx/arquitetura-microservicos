@@ -13,7 +13,6 @@ namespace GeekShopping.API.Controllers
         private readonly IProductRepository _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         private readonly ILogger<ProductController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        [Authorize]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ProductVO>>> Get()
         {

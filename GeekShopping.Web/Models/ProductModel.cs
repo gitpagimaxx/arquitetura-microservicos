@@ -1,4 +1,6 @@
-﻿namespace GeekShopping.Web.Models;
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace GeekShopping.Web.Models;
 
 public class ProductModel
 {
@@ -8,4 +10,20 @@ public class ProductModel
     public string Description { get; set; } = string.Empty;
     public string CategoryName { get; set; } = string.Empty;
     public string ImageUrl { get; set; } = string.Empty;
+    [Range(1, 100, ErrorMessage = "The quantity must be at least 1")]
+    public int Count { get; set; } = 1;
+
+    public string SubstringName()
+    {
+        if (Name.Length <= 21)
+            return Name;
+        return Name.Substring(0, 18) + "...";
+    }
+
+    public string SubstringDescription()
+    {
+        if (Description.Length <= 355)
+            return Description;
+        return Description.Substring(0, 352) + "...";
+    }
 }
