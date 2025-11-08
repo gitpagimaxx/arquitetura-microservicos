@@ -1,7 +1,7 @@
-﻿using GeekShopping.API.Model.Base;
+﻿using GeekShopping.ProductAPI.Model.Base;
 using Microsoft.EntityFrameworkCore;
 
-namespace GeekShopping.API.Model.Context;
+namespace GeekShopping.ProductAPI.Model.Context;
 
 public class MySQLContext : DbContext
 {

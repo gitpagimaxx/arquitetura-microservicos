@@ -1,26 +1,33 @@
 using AutoMapper;
-using GeekShopping.ProductAPI.Config;
-using GeekShopping.ProductAPI.Model.Context;
-using GeekShopping.ProductAPI.Repository;
-using GeekShopping.ProductAPI.Repository.Interfaces;
+using GeekShopping.CartAPI.Config;
+using GeekShopping.CartAPI.Model.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
 builder.Services.AddDbContext<MySQLContext>(options =>
-    options.UseMySql(connectionString, 
+    options.UseMySql(connectionString,
     new MySqlServerVersion(
         new Version(8, 0, 5))));
 
 IMapper mapper = MappingConfig.RegisterMaps().CreateMapper();
 builder.Services.AddSingleton(mapper);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+builder.Services.AddAuthentication("Bearer")
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.Authority = builder.Configuration["ServicesUrls:IdentityServer"];
+        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+        {
+            ValidateAudience = false
+        };
+    });
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
@@ -41,13 +48,9 @@ builder.Services.AddAuthorization(options =>
     });
 });
 
-// repository
-builder.Services.AddScoped<IProductRepository, ProductRepository>();
-
-builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo() { Title = "Geekshopping.ProductAPI", Version = "1.0" });
+    c.SwaggerDoc("v1", new OpenApiInfo() { Title = "Geekshopping.CartAPI", Version = "1.0" });
     c.EnableAnnotations();
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -76,6 +79,10 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// IoC
+// Repository
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -91,3 +98,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
+

@@ -1,4 +1,4 @@
-﻿namespace GeekShopping.ProductAPI.Data.ValueObjects;
+﻿namespace GeekShopping.CartAPI.Data.ValueObjects;
 
 public class ProductVO
 {

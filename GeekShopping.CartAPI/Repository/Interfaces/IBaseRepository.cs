@@ -1,4 +1,4 @@
-﻿namespace GeekShopping.ProductAPI.Repository.Interfaces;
+﻿namespace GeekShopping.CartAPI.Repository.Interfaces;
 
 public interface IBaseRepository<T> where T : class
 {

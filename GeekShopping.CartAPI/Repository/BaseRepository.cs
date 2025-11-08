@@ -1,7 +1,7 @@
-﻿using GeekShopping.ProductAPI.Repository.Interfaces;
+﻿using GeekShopping.CartAPI.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
-namespace GeekShopping.ProductAPI.Repository;
+namespace GeekShopping.CartAPI.Repository;
 
 public class BaseRepository<T> : IBaseRepository<T> where T : class
 {

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GeekShopping.API.Model.Base;
+namespace GeekShopping.ProductAPI.Model.Base;
 
 [Table("product")]
 public class Product : BaseEntity

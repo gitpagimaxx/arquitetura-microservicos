@@ -1,4 +1,4 @@
-﻿namespace GeekShopping.ProductAPI.Utils;
+﻿namespace GeekShopping.CartAPI.Utils;
 
 public class Role
 {

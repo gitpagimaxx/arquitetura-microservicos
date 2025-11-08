@@ -1,10 +1,10 @@
-﻿using GeekShopping.API.Data.ValueObjects;
-using GeekShopping.API.Repository.Interfaces;
-using GeekShopping.API.Utils;
+﻿using GeekShopping.ProductAPI.Data.ValueObjects;
+using GeekShopping.ProductAPI.Repository.Interfaces;
+using GeekShopping.ProductAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GeekShopping.API.Controllers
+namespace GeekShopping.ProductAPI.Controllers
 {
     [Route("api/v1/[controller]")]
     [ApiController]
