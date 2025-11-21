@@ -1,6 +1,8 @@
 using AutoMapper;
 using GeekShopping.CartAPI.Config;
 using GeekShopping.CartAPI.Model.Context;
+using GeekShopping.CartAPI.Repository;
+using GeekShopping.CartAPI.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -18,16 +20,6 @@ builder.Services.AddDbContext<MySQLContext>(options =>
 IMapper mapper = MappingConfig.RegisterMaps().CreateMapper();
 builder.Services.AddSingleton(mapper);
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
-
-builder.Services.AddAuthentication("Bearer")
-    .AddJwtBearer("Bearer", options =>
-    {
-        options.Authority = builder.Configuration["ServicesUrls:IdentityServer"];
-        options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-        {
-            ValidateAudience = false
-        };
-    });
 
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>
@@ -81,6 +73,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // IoC
 // Repository
+builder.Services.AddScoped<ICartRepository, CartRepository>();
 
 
 var app = builder.Build();

@@ -21,42 +21,42 @@ public class ProductService(HttpClient httpClient) : IProductServices
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
-    public async Task<IEnumerable<ProductModel>> FindAll(string token)
+    public async Task<IEnumerable<ProductViewModel>> FindAll(string token)
     {
         SetBearerToken(token);
 
         var response = await _httpClient.GetAsync(BasePath);
-        var products = await response.ReadContentAs<List<ProductModel>>();
+        var products = await response.ReadContentAs<List<ProductViewModel>>();
         return products ?? [];
     }
 
-    public async Task<ProductModel> FindById(long id, string token)
+    public async Task<ProductViewModel> FindById(long id, string token)
     {
         SetBearerToken(token);
 
         var response = await _httpClient.GetAsync($"{BasePath}/{id}");
-        return await response.ReadContentAs<ProductModel>() ?? new ProductModel();
+        return await response.ReadContentAs<ProductViewModel>() ?? new ProductViewModel();
     }
 
-    public async Task<ProductModel> Create(ProductModel model, string token)
+    public async Task<ProductViewModel> Create(ProductViewModel model, string token)
     {
         SetBearerToken(token);
 
         var response = await _httpClient.PostAsJson(BasePath, model);
 
         if (response.IsSuccessStatusCode)
-            return await response.ReadContentAs<ProductModel>() ?? throw new Exception();
+            return await response.ReadContentAs<ProductViewModel>() ?? throw new Exception();
         else throw new Exception("Something went wrong when calling API");
     }
 
-    public async Task<ProductModel> Update(ProductModel model, string token)
+    public async Task<ProductViewModel> Update(ProductViewModel model, string token)
     {
         SetBearerToken(token);
 
         var response = await _httpClient.PutAsJson(BasePath, model);
 
         if (response.IsSuccessStatusCode)
-            return await response.ReadContentAs<ProductModel>() ?? throw new Exception();
+            return await response.ReadContentAs<ProductViewModel>() ?? throw new Exception();
         else throw new Exception("Something went wrong when calling API");
     }
 
