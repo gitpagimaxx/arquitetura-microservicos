@@ -2,7 +2,7 @@
 
 namespace GeekShopping.Web.Services.Interfaces;
 
-public interface IProductServices
+public interface IProductService
 {
     Task<IEnumerable<ProductViewModel>> FindAll(string token);
     Task<ProductViewModel> FindById(long id, string token);

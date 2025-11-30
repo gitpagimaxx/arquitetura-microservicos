@@ -10,10 +10,10 @@ namespace GeekShopping.Web.Controllers;
 [Route("Product")]
 public class ProductController(
     ILogger<ProductController> logger,
-    IProductServices productServices) : Controller
+    IProductService productServices) : Controller
 {
     private readonly ILogger<ProductController> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    private readonly IProductServices _productService = productServices;
+    private readonly IProductService _productService = productServices;
 
     [HttpGet("")]
     public async Task<IActionResult> ProductIndex()

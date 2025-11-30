@@ -66,28 +66,21 @@ public class CartRepository(
     {
         try
         {
-            CartDetail? cartDetail = await _context.CartDetails
-                .AsNoTracking()
-                .FirstOrDefaultAsync(cd => cd.Id == cartDetailId);
+            CartDetail cartDetail = await _context.CartDetails
+                    .FirstOrDefaultAsync(c => c.Id == cartDetailId);
 
             int total = _context.CartDetails
-                .AsNoTracking()
-                .Where(cd => cd.CartHeaderId == cartDetail!.CartHeaderId)
-                .Count();
+                .Where(c => c.CartHeaderId == cartDetail.CartHeaderId).Count();
 
-            _context.CartHeaders.Remove(cartDetail!.CartHeader!);
+            _context.CartDetails.Remove(cartDetail);
 
             if (total == 1)
             {
                 var cartHeaderToRemove = await _context.CartHeaders
-                    .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.Id == cartDetail.CartHeaderId);
-
-                _context.CartHeaders.Remove(cartHeaderToRemove!);
+                _context.CartHeaders.Remove(cartHeaderToRemove);
             }
-
             await _context.SaveChangesAsync();
-
             return true;
         }
         catch (Exception)

@@ -5,21 +5,12 @@ using System.Net.Http.Headers;
 
 namespace GeekShopping.Web.Services;
 
-public class ProductService(HttpClient httpClient) : IProductServices
+public class ProductService(HttpClient httpClient) : IProductService
 {
     private readonly HttpClient _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
     public const string BasePath = "api/v1/Product";
 
-    private void SetBearerToken(string? token)
-    {
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = null;
-            return;
-        }
-
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-    }
+    
 
     public async Task<IEnumerable<ProductViewModel>> FindAll(string token)
     {
@@ -68,5 +59,16 @@ public class ProductService(HttpClient httpClient) : IProductServices
         if (response.IsSuccessStatusCode)
             return await response.ReadContentAs<bool>();
         else throw new Exception("Something went wrong when calling API");
+    }
+
+    private void SetBearerToken(string? token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+            return;
+        }
+
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 }

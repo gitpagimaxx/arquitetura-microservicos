@@ -8,9 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 var appSettings = builder.Configuration;
 
 var productUrl = builder.Configuration["ServicesUrls:ProductAPI"];
+var cartUrl = builder.Configuration["ServicesUrls:CartAPI"];
 
-builder.Services.AddHttpClient<IProductServices, ProductService>(
+builder.Services.AddHttpClient<IProductService, ProductService>(
     c => c.BaseAddress = new Uri(productUrl!));
+
+builder.Services.AddHttpClient<ICartService, CartService>(
+    c => c.BaseAddress = new Uri(cartUrl!));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

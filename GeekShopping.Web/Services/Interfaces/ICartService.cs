@@ -1,0 +1,15 @@
+﻿using GeekShopping.Web.Models;
+
+namespace GeekShopping.Web.Services.Interfaces;
+
+public interface ICartService
+{
+    Task<CartViewModel> FindCartByUserId(string userId, string token);
+    Task<CartViewModel> AddItemToCart(CartViewModel cart, string token);
+    Task<CartViewModel> UpdateCart(CartViewModel cart, string token);
+    Task<bool> RemoveFromCart(long cartId, string token);
+    Task<bool> ApplyCoupon(CartViewModel cart, string coupon, string token);
+    Task<bool> RemoveCoupon(string userId, string token);
+    Task<bool> ClearCoupon(string userId, string token);
+    Task<CartViewModel> Checkout(CartHeaderViewModel cartHeader, string token);
+}
