@@ -9,12 +9,16 @@ var appSettings = builder.Configuration;
 
 var productUrl = builder.Configuration["ServicesUrls:ProductAPI"];
 var cartUrl = builder.Configuration["ServicesUrls:CartAPI"];
+var couponUrl = builder.Configuration["ServicesUrls:CouponAPI"];
 
 builder.Services.AddHttpClient<IProductService, ProductService>(
     c => c.BaseAddress = new Uri(productUrl!));
 
 builder.Services.AddHttpClient<ICartService, CartService>(
     c => c.BaseAddress = new Uri(cartUrl!));
+
+builder.Services.AddHttpClient<ICouponService, CouponService>(
+    c => c.BaseAddress = new Uri(couponUrl!));
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
@@ -60,6 +64,5 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 
 app.Run();

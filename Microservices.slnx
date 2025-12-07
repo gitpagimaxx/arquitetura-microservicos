@@ -2,9 +2,13 @@
   <Folder Name="/Frontend/">
     <Project Path="GeekShopping.Web/GeekShopping.Web.csproj" />
   </Folder>
+  <Folder Name="/Integration/">
+    <Project Path="GeekShopping.MessageBus/GeekShopping.MessageBus.csproj" Id="3c526767-5bc4-4eea-be02-778000a8c909" />
+  </Folder>
   <Folder Name="/Services/">
     <Project Path="GeekShopping.API/GeekShopping.ProductAPI.csproj" />
     <Project Path="GeekShopping.CartAPI/GeekShopping.CartAPI.csproj" Id="6c5b6d7c-342c-467b-9286-047d442208d5" />
+    <Project Path="GeekShopping.CouponAPI/GeekShopping.CouponAPI.csproj" Id="cf4723f3-679e-429a-a7df-5f8ad416dbb6" />
     <Project Path="GeekShopping.IdentityServer/GeekShopping.IdentityServer.csproj" Id="b98c1b87-b340-4d26-b07c-e467b42af13d" />
   </Folder>
 </Solution>
